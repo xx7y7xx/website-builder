@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Website Builder</title>
+  <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+</head>
+<body>
+<ul>
+</ul>
+<script>
+var fs = require('fs');
+
+// List files/dirs in current dir.
+var fl = fs.readdirSync(".");
+
+var i;
+for (i in fl) {
+  $("ul").append("<li>" + fl[i] + "</li>");
+}
+
+</script>
+</body>
+</html>
