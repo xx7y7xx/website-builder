@@ -5,20 +5,32 @@ Build website from given HTML template and form data.
 
 ![](res/intro.png)
 
-## Setup
+## Setup for Linux
 
-Download nw.js and extract to `/opt` (for Linux) or `D:\opt` (for Windows).
+Download nw.js and extract to `/opt`.
 
-For Linux, set a environment variable
+Set a environment variable, and add these lines to `~/.bashrc`
 
 ```
-nw = /opt/nwjs-v0.12.3-linux-x64/nw
+# nw.js
+export nw=~/opt/nwjs-v0.12.3-linux-x64/nw
 ```
 
-For Windows, set a environment variable
+Open a new teminal window, cd to the path containing `package.json`
+
+```
+cd $dir_of_package_json
+./run.sh
+```
+
+## Setup for Windows
+
+Download nw.js and extract to `D:\opt`.
+
+Set a environment variable
 
 ```
 nw = D:\opt\nwjs-v0.12.3-win-x64\nw.exe
 ```
 
-Double click `run.sh` (for Linux) or `run.bat` (for Windows) to run this Application.
+Double click `run.bat` to run this Application.
