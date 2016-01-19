@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="icon" href="favicon.ico">
+<title>中国人民大学附属中学3D展览中心</title>
+<!-- Bootstrap core CSS -->
+<link href="http://libs.baidu.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+<!-- user defined style -->
+<style>
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.navbar {
+  margin-bottom: 0px;
+}
+.jumbotron, .jumbotron .container {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+.jumbotron .container {
+  padding-top: 52px;
+}
+.jumbotron .container img {
+  border: none;
+  display: none;
+}
+</style>
+</head>
+<body>
+<!-- Static navbar -->
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+        <span class="sr-only">展开</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">
+        <img alt="Brand" height="20" src="logo.png">
+      </a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">中国人民大学附属中学3D展览中心</a></li>
+        <li><a href="#about">特色教育展览馆</a></li>
+        <li><a href="#contact">教育教学展览馆</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="../">返回</a></li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div>
+</nav>
+<div class="jumbotron">
+  <div class="container">
+    <img src="bg.jpg" />
+  </div> <!-- /container -->
+</div> <!-- /jumbotron -->
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="http://libs.baidu.com/jquery/1.11.1/jquery.min.js"></script>
+<script src="http://libs.baidu.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+<script>
+// Resize background image.
+$(function() {
+  // Constant value
+  var bg_image_width = 4000;//px
+  var bg_image_height = 1949;//px
+  var navbar_height = 52;//px
+
+  function resize_image() {
+    var width = $(window).width();
+    var height = $(window).height() - navbar_height;
+    var pw = width/bg_image_width;
+    var ph = height/bg_image_height;
+    //设置外边距
+    var img = $(".jumbotron .container img");
+    if (pw > ph) {
+      imgWidth = Math.ceil(bg_image_width*ph);
+      var wMar = width - imgWidth;
+      wMar = Math.ceil(wMar/2);
+      img.width(imgWidth);
+      img.height(height);
+      img.css("margin-left", wMar + "px");
+    } else {
+      imgHeight = Math.ceil(bg_image_height*pw);
+      var hMar = height - imgHeight;
+      hMar = Math.ceil(hMar/2);
+      img.width(width);
+      img.height(imgHeight);
+      img.css("margin-top", hMar + "px");
+    }
+    img.show();
+  }
+
+  resize_image();
+
+  $(window).resize(function() {
+    resize_image();
+  });
+});
+</script>
+</body>
+</html>
