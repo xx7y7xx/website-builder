@@ -47,7 +47,7 @@ html, body {
         <span class="icon-bar"></span>
       </button>
       <a class="navbar-brand" href="#">
-        <img alt="Brand" height="20" src="logo.png">
+        <img alt="Brand" height="20" src="logo.png" />
       </a>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
@@ -64,9 +64,15 @@ html, body {
 </nav>
 <div class="jumbotron">
   <div class="container">
-    <img src="bg.jpg" />
+    <img id="image-map" src="bg.jpg" usemap="#planetmap" />
   </div> <!-- /container -->
 </div> <!-- /jumbotron -->
+<map name="planetmap" id="map">
+  <area shape="rect" data-coords="65,76,86,99" data-url="" href="#" alt="">
+  <area shape="rect" data-coords="363,85,383,112" data-url="" href="#" alt="">
+  <area shape="rect" data-coords="233,208,256,229" data-url="" href="#" alt="">
+  <area shape="rect" data-coords="50,208,72,227" data-url="" href="#" alt="">
+</map>
 <!-- Bootstrap core JavaScript
 ================================================== -->
 <!-- Placed at the end of the document so the pages load faster -->
@@ -110,6 +116,33 @@ $(function() {
   $(window).resize(function() {
     resize_image();
   });
+});
+
+// Resize image map
+$(function() {
+  function resize_image_map() {
+    var image_width = $("#image-map").width();
+    var times = image_width / 500;
+    $('map area').each(function(k, v) {
+      var coords = $(v).data("coords").split(",");
+      var url = $(v).data("url");
+      var x1 = coords[0] * times;
+      var y1 = coords[1] * times;
+      var x2 = coords[2] * times;
+      var y2 = coords[3] * times;
+      var new_coords = x1 + "," + y1 + "," + x2 + "," + y2
+      $(v).attr("coords", new_coords);
+      $(v).attr("href", url);
+    });
+  }
+  var timer_id;
+  $(window).resize(function() {
+    clearTimeout(timer_id);
+    timer_id = setTimeout(function() {
+      resize_image_map();
+    }, 300);
+  });
+  resize_image_map();
 });
 </script>
 </body>
