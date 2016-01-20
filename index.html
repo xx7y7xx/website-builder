@@ -2,22 +2,54 @@
 <html>
 <head>
   <title>Website Builder</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
 </head>
 <body>
-<ul>
-</ul>
+<input id="project-path" placeholder="请输入项目路径" value="" />
+<button id="reload-project">重新加载</button>
+<div class="sub-project-list">
+</div>
 <script>
-var fs = require('fs');
+$(function() {
+  var fs = require('fs');
+  var project_dir = $("#project-path").val();
 
-// List files/dirs in current dir.
-var fl = fs.readdirSync(".");
-
-var i;
-for (i in fl) {
-  $("ul").append("<li>" + fl[i] + "</li>");
-}
-
+  var load_project = function () {
+    $(".sub-project-list").html("");
+    // Load database
+    var db = JSON.parse(fs.readFileSync(project_dir + "/" + "db.json", "utf8"));
+    // List files/dirs in current dir.
+    $.each(fs.readdirSync(project_dir), function(key, path) {
+      var abs_path = project_dir + "/" + path;
+      if (!fs.lstatSync(abs_path).isDirectory()) {
+        console.log("Ignore path: " + path);
+        return;
+      }
+      function _get_sub_project_name(db) {
+        var ret = "";
+        $.each(db.sub_projects, function(k, v) {
+          if (v.dir_name == path) {
+            ret = v.sub_project_name;
+          }
+        });
+        return ret;
+      }
+      var sub_project_name = _get_sub_project_name(db);
+      $(".sub-project-list").append(
+        '<h4>' + path + '</h4>' +
+        '<label>项目名称:</label> ' +
+        '<input placeholder="请输入项目名称" value="' + sub_project_name + '" />'
+      );
+    });
+  };
+  
+  $("#reload-project").click(function() {
+    load_project();
+  });
+  
+  load_project();
+});
 </script>
 </body>
 </html>
