@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Website Builder</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<title>Website Builder</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<style>
+#project-path {
+  width: 400px;
+}
+</style>
 </head>
 <body>
 <input id="project-path" placeholder="请输入项目路径" value="" />
@@ -12,13 +17,43 @@
 </div>
 <script>
 $(function() {
-  var fs = require('fs');
-  var project_dir = $("#project-path").val();
-
+  var fs = require("fs");
+  var path = require("path");
+  
+  var DB_FILENAME = "db.json";
+  
   var load_project = function () {
+    var project_dir = $("#project-path").val();
+    
+    if (!project_dir) return;
+    
+    try {
+      var stats = fs.statSync(project_dir);
+    } catch(e) {
+      alert("Dir not exist");
+      console.log(e);
+      return;
+    }
+    if (!stats.isDirectory()) {
+      alert("not a dir");
+      return;
+    }
+    
+    // Save for next time using.
+    window.localStorage.setItem("project_dir", project_dir);
+    
+    var db;
     $(".sub-project-list").html("");
-    // Load database
-    var db = JSON.parse(fs.readFileSync(project_dir + "/" + "db.json", "utf8"));
+    
+    // Load database when exists.
+    var db_file = path.join(project_dir, DB_FILENAME);
+    if (!fs.existsSync(db_file)) {
+      console.log(DB_FILENAME + " not exist: " + db_file);
+      return;
+    } else {
+      db = JSON.parse(fs.readFileSync(db_file, "utf8"));
+    }
+    
     // List files/dirs in current dir.
     $.each(fs.readdirSync(project_dir), function(key, path) {
       var abs_path = project_dir + "/" + path;
@@ -26,7 +61,10 @@ $(function() {
         console.log("Ignore path: " + path);
         return;
       }
-      function _get_sub_project_name(db) {
+      /**
+       * Get project name from database
+       */
+      function _get_sub_project_name(db, path) {
         var ret = "";
         $.each(db.sub_projects, function(k, v) {
           if (v.dir_name == path) {
@@ -35,7 +73,7 @@ $(function() {
         });
         return ret;
       }
-      var sub_project_name = _get_sub_project_name(db);
+      var sub_project_name = _get_sub_project_name(db, path);
       $(".sub-project-list").append(
         '<h4>' + path + '</h4>' +
         '<label>项目名称:</label> ' +
@@ -47,6 +85,13 @@ $(function() {
   $("#reload-project").click(function() {
     load_project();
   });
+  
+  // Load last project path
+  (function() {
+    var project_dir = window.localStorage.getItem("project_dir") || "";
+    $("#project-path").val(project_dir);
+  })();
+  
   
   load_project();
 });
