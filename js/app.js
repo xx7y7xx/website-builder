@@ -24,14 +24,37 @@ $(function() {
   //load_project();
   
   var model = new SubprojectListModel(project_dir, DB_FILENAME);
-  model.load();
-  
   var view = new SubprojectListView(model, {
     "list": $(".sub-project-list"),
-    "reload-button": $("reload-project")
+    "reload-button": $("#reload-project")
   });
+  var controller = new SubProjectListController(model, view);
   view.show();
 });
+
+/**
+ * event
+ * @class Event
+ */
+function Event(sender) {
+  /**
+   * Who (whick view) send this event.
+   */
+  this._sender = sender;
+  this._listeners = [];
+}
+
+Event.prototype = {
+  "attach": function(listener) {
+    this._listeners.push(listener);
+  },
+  "notify": function(args) {
+    var index;
+    for (index = 0; index < this._listeners.length; index += 1) {
+      this._listeners[index](this.sender, args);
+    }
+  }
+};
 
 /**
  * SubprojectListModel
@@ -55,6 +78,7 @@ function SubprojectListModel(project_dir, db_filename) {
   this._db = {};
   
   this._load_db();
+  this._load_fs();
 }
 
 SubprojectListModel.prototype = {
@@ -70,7 +94,7 @@ SubprojectListModel.prototype = {
    * Read project dir and store all sub dir.
    * @method load
    */
-  "load": function() {
+  "_load_fs": function() {
     try {
       var stats = fs.statSync(this._project_dir);
     } catch(e) {
@@ -137,6 +161,14 @@ SubprojectListModel.prototype = {
 function SubprojectListView(model, elements) {
   this._model = model;
   this._elements = elements;
+  
+  this.reloadButtonClicked = new Event(this);
+  
+  var _this = this;
+  
+  this._elements["reload-button"].click(function() {
+    _this.rebuildList();
+  });
 }
 
 SubprojectListView.prototype = {
@@ -153,6 +185,7 @@ SubprojectListView.prototype = {
    * @method rebuildList
    */
   "rebuildList": function() {
+    console.log("Reload data from model.");
     var list, items;
     
     // Clear list.
@@ -168,4 +201,17 @@ SubprojectListView.prototype = {
       );
     });
   }
+};
+
+/**
+ * SubProjectListController
+ * @class SubProjectListController
+ */
+function SubProjectListController(model, view) {
+  this._model = model;
+  this._view = view;
+}
+
+SubProjectListController.prototype = {
+  
 };
