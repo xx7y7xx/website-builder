@@ -1,36 +1,12 @@
+/*jslint node: true, browser: true*/
+/*global $, jQuery, alert*/
+
 "use strict";
 
 var fs = require("fs");
 var path = require("path");
 
-$(function() {
-  
-  var DB_FILENAME = "db.json";
-  
-  $("#reload-project").click(function() {
-    //load_project();
-  });
-  
-  // Load last project path
-  (function() {
-    var project_dir = window.localStorage.getItem("project_dir") || "";
-    $("#project-path").val(project_dir);
-  })();
-  var project_dir = $("#project-path").val();
-  
-//  // Save for next time using.
-//  window.localStorage.setItem("project_dir", project_dir);
-  
-  //load_project();
-  
-  var model = new SubprojectListModel(project_dir, DB_FILENAME);
-  var view = new SubprojectListView(model, {
-    "list": $(".sub-project-list"),
-    "reload-button": $("#reload-project")
-  });
-  var controller = new SubProjectListController(model, view);
-  view.show();
-});
+var DB_FILENAME = "db.json";
 
 /**
  * event
@@ -40,18 +16,18 @@ function Event(sender) {
   /**
    * Who (whick view) send this event.
    */
-  this._sender = sender;
-  this._listeners = [];
+  this.sender = sender;
+  this.listeners = [];
 }
 
 Event.prototype = {
-  "attach": function(listener) {
-    this._listeners.push(listener);
+  "attach": function (listener) {
+    this.listeners.push(listener);
   },
-  "notify": function(args) {
+  "notify": function (args) {
     var index;
-    for (index = 0; index < this._listeners.length; index += 1) {
-      this._listeners[index](this.sender, args);
+    for (index = 0; index < this.listeners.length; index += 1) {
+      this.listeners[index](this.sender, args);
     }
   }
 };
@@ -66,19 +42,19 @@ function SubprojectListModel(project_dir, db_filename) {
    * @property _project_dir
    * @private
    */
-  this._project_dir = project_dir;
-  this._db_filename = db_filename;
-  this._items = [];
+  this.project_dir = project_dir;
+  this.db_filename = db_filename;
+  this.items = [];
   
   /**
    * JSON database store project information.
    * @property _db
    * @private
    */
-  this._db = {};
+  this.db = {};
   
-  this._load_db();
-  this._load_fs();
+  this.load_db();
+  this.load_fs();
 }
 
 SubprojectListModel.prototype = {
@@ -86,18 +62,19 @@ SubprojectListModel.prototype = {
    * getItems
    * @method getItems
    */
-  "getItems": function() {
-    return [].concat(this._items);
+  "getItems": function () {
+    return [].concat(this.items);
   },
   
   /**
    * Read project dir and store all sub dir.
    * @method load
    */
-  "_load_fs": function() {
+  "load_fs": function () {
+    var stats, that = this;
     try {
-      var stats = fs.statSync(this._project_dir);
-    } catch(e) {
+      stats = fs.statSync(this.project_dir);
+    } catch (e) {
       alert("Dir not exist");
       console.log(e);
       return;
@@ -109,20 +86,20 @@ SubprojectListModel.prototype = {
     }
     
     // List files/dirs in current dir.
-    var _this = this;
-    $.each.call(this, fs.readdirSync(this._project_dir), function(key, path) {
-      var abs_path = _this._project_dir + "/" + path;
+    
+    $.each.call(this, fs.readdirSync(this.project_dir), function (key, path) {
+      var abs_path = that.project_dir + "/" + path;
       if (!fs.lstatSync(abs_path).isDirectory()) {
         console.log("Ignore path: " + path);
         return;
       }
-      _this._items.push({
+      that.items.push({
         "dir_name": path,
-        "sub_project_name": _this._get_sub_project_name(path)
+        "sub_project_name": that.getSubProjectName(path)
       });
     });
     
-    return this._items;
+    return this.items;
   },
   
   /**
@@ -130,27 +107,51 @@ SubprojectListModel.prototype = {
    * @method _load_db
    * @private
    */
-  "_load_db": function() {
-    var db_file = path.join(this._project_dir, this._db_filename);
+  "load_db": function () {
+    var db_file = path.join(this.project_dir, this.db_filename);
     if (!fs.existsSync(db_file)) {
       console.log(DB_FILENAME + " not exist: " + db_file);
       return;
     } else {
-      this._db = JSON.parse(fs.readFileSync(db_file, "utf8"));
+      this.db = JSON.parse(fs.readFileSync(db_file, "utf8"));
     }
   },
   
   /**
-   * Get project name from database
+   * Get project name from database in selected sub project dir
+   * @method getSubProjectName
+   * @return {String} sub project name
    */
-  "_get_sub_project_name": function(path) {
-    var ret = "";
-    $.each(this._db.sub_projects, function(k, v) {
-      if (v.dir_name == path) {
-        ret = v.sub_project_name;
-      }
-    });
-    return ret;
+  "getSubProjectName": function (dirName) {
+    var dbFile = path.join(this.project_dir, dirName, this.db_filename),
+      name = "",
+      fileObj;
+    
+    if (!fs.existsSync(dbFile)) {
+      console.log(DB_FILENAME + " not exist: " + dbFile);
+    } else {
+      fileObj = JSON.parse(fs.readFileSync(dbFile, "utf8"));
+      name = fileObj.name;
+    }
+    
+    return name;
+  },
+  
+  /**
+   * Save project name to database.
+   * @method setSubProjectName
+   */
+  "setSubProjectInfo": function (dirName, name) {
+    var dbFile = path.join(this.project_dir, dirName, this.db_filename),
+      txt = "";
+    
+    console.log("dir name: " + dirName);
+    console.log("project name: " + name);
+    
+    txt = JSON.stringify({
+      "name": name
+    }, null, 2);
+    fs.writeFileSync(dbFile, txt, 'utf8');
   }
 };
 
@@ -159,15 +160,22 @@ SubprojectListModel.prototype = {
  * @class SubprojectListView
  */
 function SubprojectListView(model, elements) {
-  this._model = model;
-  this._elements = elements;
+  this.model = model;
+  this.elements = elements;
   
   this.reloadButtonClicked = new Event(this);
+  this.saveButtonClicked = new Event(this);
   
-  var _this = this;
+  var that = this;
   
-  this._elements["reload-button"].click(function() {
-    _this.rebuildList();
+  this.elements["reload-button"].click(function () {
+    that.rebuildList();
+  });
+  
+  this.elements["sub-project-list"].on("click", ".save-button", function () {
+    that.saveButtonClicked.notify({
+      "sub-project": $(this).parent()
+    });
   });
 }
 
@@ -176,7 +184,7 @@ SubprojectListView.prototype = {
    * Show view
    * @method show
    */
-  "show": function() {
+  "show": function () {
     this.rebuildList();
   },
   
@@ -184,20 +192,23 @@ SubprojectListView.prototype = {
    * Rebuild sub project list
    * @method rebuildList
    */
-  "rebuildList": function() {
+  "rebuildList": function () {
     console.log("Reload data from model.");
     var list, items;
     
     // Clear list.
-    list = this._elements.list;
+    list = this.elements.list;
     list.html("");
     
-    items = this._model.getItems();
-    $.each(items, function(key, value){
+    items = this.model.getItems();
+    $.each(items, function (key, value) {
       $(".sub-project-list").append(
         '<h4>' + value.dir_name + '</h4>' +
-        '<label>项目名称:</label> ' +
-        '<input placeholder="请输入项目名称" value="' + value.sub_project_name + '" />'
+          '<div class="subproject" data-dir-name="' + value.dir_name + '">' +
+          '<label>项目名称:</label> ' +
+          '<input placeholder="请输入项目名称" value="' + value.sub_project_name + '" /> ' +
+          '<button class="save-button">保存</button>' +
+          '</div>'
       );
     });
   }
@@ -208,10 +219,61 @@ SubprojectListView.prototype = {
  * @class SubProjectListController
  */
 function SubProjectListController(model, view) {
-  this._model = model;
-  this._view = view;
+  this.model = model;
+  this.view = view;
+  
+  var that = this;
+  this.view.saveButtonClicked.attach(function (sender, args) {
+    console.log("event sender: " + sender);
+    var subProjectElement = args["sub-project"],
+      name,
+      dirName;
+    
+    name = subProjectElement.find("input").val();
+    dirName = subProjectElement.data("dir-name");
+    
+    console.log("Get user input project name: " + name);
+    console.log("Get dir name stored in html5 data property: " + dirName);
+    
+    that.setSubProjectInfo(dirName, name);
+  });
 }
 
 SubProjectListController.prototype = {
-  
+  "setSubProjectInfo": function (dirName, name) {
+    this.model.setSubProjectInfo(dirName, name);
+  }
 };
+
+$(function () {
+  
+  var project_dir,
+    model,
+    view,
+    controller;
+  
+  $("#reload-project").click(function () {
+    //load_project();
+  });
+  
+  // Load last project path
+  (function () {
+    var project_dir = window.localStorage.getItem("project_dir") || "";
+    $("#project-path").val(project_dir);
+  }());
+  project_dir = $("#project-path").val();
+  
+//  // Save for next time using.
+//  window.localStorage.setItem("project_dir", project_dir);
+  
+  //load_project();
+  
+  model = new SubprojectListModel(project_dir, DB_FILENAME);
+  view = new SubprojectListView(model, {
+    "list": $(".sub-project-list"),
+    "reload-button": $("#reload-project"),
+    "sub-project-list": $(".sub-project-list")
+  });
+  controller = new SubProjectListController(model, view);
+  view.show();
+});
