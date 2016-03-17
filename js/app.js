@@ -38,40 +38,41 @@ Event.prototype = {
  */
 function SubprojectListModel(project_dir, db_filename) {
   /**
-   * _project_dir
-   * @property _project_dir
+   * Project path
+   * @property project_dir
    * @private
    */
   this.project_dir = project_dir;
   this.db_filename = db_filename;
-  this.items = [];
   
   /**
-   * JSON database store project information.
-   * @property _db
+   * All sub project info in one big array.
+   * @property items
    * @private
    */
-  this.db = {};
+  this.items = [];
   
-  this.load_db();
-  this.load_fs();
+  // Load all into this.items
+  this.load_sub_projects();
 }
 
 SubprojectListModel.prototype = {
   /**
    * getItems
    * @method getItems
+   * @return {Array} this.items contains all sub project info
    */
   "getItems": function () {
     return [].concat(this.items);
   },
   
   /**
-   * Read project dir and store all sub dir.
+   * Read project dir and store all sub dir in items.
    * @method load
+   * @private
    */
-  "load_fs": function () {
-    var stats, that = this;
+  "load_sub_projects": function () {
+    var stats, self = this;
     try {
       stats = fs.statSync(this.project_dir);
     } catch (e) {
@@ -88,14 +89,14 @@ SubprojectListModel.prototype = {
     // List files/dirs in current dir.
     
     $.each.call(this, fs.readdirSync(this.project_dir), function (key, path) {
-      var abs_path = that.project_dir + "/" + path;
+      var abs_path = self.project_dir + "/" + path;
       if (!fs.lstatSync(abs_path).isDirectory()) {
         console.log("Ignore path: " + path);
         return;
       }
-      that.items.push({
+      self.items.push({
         "dir_name": path,
-        "sub_project_name": that.getSubProjectName(path)
+        "sub_project_name": self.getSubProjectInfo(path).name
       });
     });
     
@@ -104,37 +105,48 @@ SubprojectListModel.prototype = {
   
   /**
    * Load database when exists.
-   * @method _load_db
+   * @method load_db
+   * @param {String} path to json(db) file.
+   * @return {Object|null} When json not exist or parsed error, return null
+   *         When json exists, return parsed json object.
    * @private
    */
-  "load_db": function () {
-    var db_file = path.join(this.project_dir, this.db_filename);
-    if (!fs.existsSync(db_file)) {
-      console.log(DB_FILENAME + " not exist: " + db_file);
-      return;
+  "load_db": function (path) {
+    if (!fs.existsSync(path)) {
+      console.log("db not exist: " + path);
+      return null;
     } else {
-      this.db = JSON.parse(fs.readFileSync(db_file, "utf8"));
+      try {
+        return JSON.parse(fs.readFileSync(path, "utf8"));
+      } catch (e) {
+        return null;
+      }
     }
   },
   
   /**
-   * Get project name from database in selected sub project dir
-   * @method getSubProjectName
-   * @return {String} sub project name
+   * Get sub project info from database in selected sub project dir.
+   *
+   * All sub project info is stored in a JSON file under every dir.
+   * 
+   * @method getSubProjectInfo
+   * @return {Object} sub project info with name
+   * {
+   *   "name": "sub project name"
+   * }
    */
-  "getSubProjectName": function (dirName) {
+  "getSubProjectInfo": function (dirName) {
     var dbFile = path.join(this.project_dir, dirName, this.db_filename),
-      name = "",
-      fileObj;
+      fileObj,
+      proj_info = {
+        "name": ""
+      };
     
-    if (!fs.existsSync(dbFile)) {
-      console.log(DB_FILENAME + " not exist: " + dbFile);
-    } else {
-      fileObj = JSON.parse(fs.readFileSync(dbFile, "utf8"));
-      name = fileObj.name;
+    fileObj = this.load_db(dbFile);
+    if (fileObj) {
+      proj_info.name = fileObj.name || "";
     }
-    
-    return name;
+    return proj_info;
   },
   
   /**

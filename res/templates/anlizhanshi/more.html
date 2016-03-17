@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+<meta name="description" content="电子贸促会网展" />
+<meta name="keywords" content="电子贸促会网展" />
+<meta name="robots" content="all" />
+<title>{{ data.html_title }}</title>
+<link rel="stylesheet" href="css/more.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="libs/bootstrap/css/bootstrap.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="css/bootstrap-ie6.min.css" type="text/css" media="screen" />
+<script type="text/javascript" src="js/ie6png.js"></script>
+</head>
+<body onload="correctPNG()">
+
+<div id="header_wrap">
+	<div id="header" class="content">
+		<a class="logo"><img src="image/logo.png" /></a>
+		<div class="search_wrap" style="display: none;">
+			<input type="text" class="search_input" placeholder="搜索企业、展厅" />
+		</div>
+	</div><!-- end of header bar -->
+</div>
+
+<div class="header_bottom">
+  <div class="headerNav" id="place">
+    <a class="homePar"><a class='home'>首页</a></a>
+    <span class="divider">>></span>
+    <a class="exhinfo"><a class='placea'>{{ data.fengge_name|e }}</a></a>
+    <span class="divider">>></span>
+    <a class="exhinfo"><a class='placea'>所有展厅</a></a>
+  </div>
+</div><!-- end of header_bottom -->
+
+<div id="main">
+  <div id="moreList" class="moreList">
+
+{% for item in data.item_list %}
+
+    <div class='floor_item' data-order="{{ item[2] }}" data-dir-created-time="{{ item[3] }}">
+      <div class='divImg' title='点击查看详细商品展览'>
+        <a href="../{{ item[0]|e }}/pano.swf" target="_blank" style="display:inline-block;" >
+          <img src="../{{ item[0]|e }}/pano.preview.jpg" class='exhibitionImg'></img>
+        </a>
+      </div>
+      <a href="../{{ item[0]|e }}/pano.swf" target="_blank" style="color: #000;display:inline-block;" class='exhibitionName' title='点击查看详细商品展览'>
+        {{ item[1]|e }}
+      </a>
+    </div><!-- /.floor_item -->
+
+{% endfor %}
+
+    <div class='clear'></div>
+  </div><!-- /.moreList -->
+  <div id="pagination"></div>
+</div><!-- /#main -->
+
+<script type="text/javascript" src="js/spolo.js"></script>
+<script type="text/javascript" src="libs/jquery/jquery.js"></script>
+<script type="text/javascript" src="libs/jquery/js/jquery.placeholder.js"></script>
+<script type="text/javascript" src="js/more.js"></script>
+<script type="text/javascript" src="js/gdata.js"></script>
+<script type="text/javascript" src="libs/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="libs/bootstrap/js/bootstrap-paginator.min.js"></script>
+<script>
+var options = {
+  currentPage: {{ data.current_page }},
+  totalPages: 1,
+  limit: {{ data.option.limit }},
+  size:"large",
+  onPageClicked: function(e, originalEvent, type, page){
+    //getExhibitions.call(this, cid, cname, page, false);
+    window.location.href = "more-{{ data.fengge_key }}-" + page + ".html";
+  }
+}
+
+options.totalPages = Math.ceil({{ data.count }}/options.limit);
+
+// (Debug Only) Static html file generation time.
+options.timestamp = "{{ data.meta.timestamp }}";
+
+if(options.totalPages<1){
+  options.totalPages = 1;
+}
+
+var init = true;
+if(init){
+  //createCurPos.call(this, "");
+  $(".exhinfo").append("");
+  $("#pagination").bootstrapPaginator(options);
+}
+</script>
+</body>
+
+</html>

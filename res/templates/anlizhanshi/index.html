@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="robots" content="all" />
+<link rel="stylesheet" href="css/list.css" type="text/css" media="screen" />
+<title>{{ data.html_title }}</title>
+<script type="text/javascript" src="js/ie6png.js"></script>
+</head>
+<body onload="correctPNG()">
+
+<div id="header_wrap">
+	<div id="header" class="content">
+		<div class="logo_wrap">
+			<a class="logo"><img src="image/logo.png" /></a>
+		</div>
+		<div class="search_wrap" style="display: none;">
+			<input type="text" class="search_input" placeholder="搜索" x-webkit-speech lang="zh-CN" />
+		</div>
+	</div><!-- end of header bar -->
+</div>
+
+<div class="search_result_wrap">
+	<div class="search_result content">
+		<div class="search_result_head">搜索结果</div>
+		<div class="close_wrap">
+			<div class="close">x</div>
+		</div>
+		<div class="con_wrap">
+			<div class="arrowLeft">&lt;</div>
+			<div class="con">
+				
+			</div>
+			<div class="arrowRight">&gt;</div>
+		</div>
+	</div>
+</div>
+
+<div class="header_bottom">
+	<div class="header_bottom_content" style="display: none;">
+		<div class="header_nav">
+			<a href="index.html" style="border-left:none;">
+				首页
+				<span></span>
+			</a>
+			<a href="#hot_exhi">
+				热门展厅
+				<span></span>
+			</a>
+			<a href="#latest_exhi">
+				最新展厅
+				<span></span>
+			</a>				
+<!--
+			<a arget="_self" href="http://3dly.net/RFIDlianmengfuwudating/" style="position: absolute;right: 258px;">
+				进入下一个展厅
+				<span></span>
+			</a>
+-->
+			<a target="_self" href="" style="position: absolute;right: 172px;">
+				<span style="position: relative;left: -14px;"></span>
+				返回大厅
+			</a>
+<!-- 				<a href="zone.html">
+				展商专区
+				<span></span>
+			</a> -->
+		</div>
+	</div>
+</div><!-- end of header_bottom -->
+
+<!--<div style="height: 70px;background: #1f1e26;width: 100%;">
+</div>-->
+
+<div class="bannar" style="background:#f2f0f0;">
+  <div class="top3_wrap">
+    <ul class="content preview360">
+      {% for datu in data.datu_list %}
+      <li style="background:url(../{{ datu[0] }}/shouyedatu.jpg);"><a href="../{{ datu[0] }}/pano.swf" target="_self"></a>        </li>
+      {% endfor %}
+    </ul>
+    <div class="top3">
+      {% for datu in data.datu_list %}
+      <a href="#">
+        <img id="preview_{{ datu[1]|e }}" src="../{{ datu[0] }}/pano.preview.jpg" />
+      </a>
+      <span><!----></span>
+      {% endfor %}
+    </div>
+  </div>
+</div><!-- end of bannar -->
+
+<div id="glue_content">
+  <div class="glue_right">
+    <div style="height:30px;"></div>
+    {% for fengge_key, fengge_item in data.fengge_dict.iteritems() %}
+    <div class="floor">
+      <a name="{{ fengge_key }}"></a>
+      <h2 id="section-{{ fengge_key }}">{{ fengge_item.name|e }}</h2>
+      <div class="floor_more">
+        <a href="more-{{ fengge_key }}-1.html">查看更多</a>
+      </div>
+      <div class="floor_list" id="{{ fengge_key }}">
+        {% for item in fengge_item.list %}
+        <div class='floor_item' data-order="{{ item[1]|e }}">
+          <a target="_self" href="../{{ item[0]|e }}/pano.swf">
+            <img src="../{{ item[0]|e }}/pano.preview.jpg">
+          </a>
+          <div class='exhibition_name'>{{ item[1]|e }}</div>
+        </div><!-- /.floor_item -->
+        {% endfor %}
+      </div><!-- /.floor_list -->
+      <div class='clear'></div>
+    </div><!-- /.floor -->
+    {% endfor %}
+  </div><!-- /.glue_right -->
+        
+  <div class="glue_left">
+    <div class="category_wrap">
+      <div class="category_head">分类展馆</div>
+      <ul class="cate_list">
+        {% for fengge_key, fengge_item in data.fengge_dict.iteritems() %}
+        <li class="cate_li li_a item1">
+          <span class="icon"></span>
+          <a href="#section-{{ fengge_key }}">{{ fengge_item.name|e }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="category_detail">
+        <div class="shadow"></div>
+        <div class="category_detail_con">
+          <h3 class="cate_con_title">展厅</h3>
+          <div class="category">
+            <!-- <div class="categoryTwo" >旅游商品</div>
+            <div class="categoryTwo" >纪念品</div>
+            <div class="categoryTwo" >土特产品</div>
+            <div class="categoryTwo"><a target='_blank' href="http://3dly.net/zhilingyun/">电脑周边产品</a></div>
+            <div class="categoryTwo"><a target='_blank' href="http://3dly.net/changhong/">长虹电视产品</a></div>-->
+          </div>
+        </div>
+      </div><!-- end of category_detail -->
+    </div> <!-- end of category_wrap -->
+  </div><!-- end of glue_left -->
+</div><!-- end of glue_content -->
+
+
+<script type="text/javascript" src="libs/jquery/jquery.js"></script>
+<script type="text/javascript" src="libs/jquery/js/jquery.placeholder.js"></script>
+<script type="text/javascript" src="js/list/category.js"></script>
+<script type="text/javascript" src="js/list/bannar.js"></script>
+</body>
+
+</html>
