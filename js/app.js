@@ -157,6 +157,7 @@ SubprojectListModel.prototype = {
     var dbFile = path.join(this.project_dir, dirName, this.db_filename),
       txt = "";
     
+    console.log("Save project info.");
     console.log("dir name: " + dirName);
     console.log("project name: " + name);
     
@@ -188,6 +189,7 @@ function SubprojectListView(model, elements) {
     that.saveButtonClicked.notify({
       "sub-project": $(this).parent()
     });
+    alert("保存成功！");
   });
 }
 
@@ -234,7 +236,7 @@ function SubProjectListController(model, view) {
   this.model = model;
   this.view = view;
   
-  var that = this;
+  var self = this;
   this.view.saveButtonClicked.attach(function (sender, args) {
     console.log("event sender: " + sender);
     var subProjectElement = args["sub-project"],
@@ -247,7 +249,7 @@ function SubProjectListController(model, view) {
     console.log("Get user input project name: " + name);
     console.log("Get dir name stored in html5 data property: " + dirName);
     
-    that.setSubProjectInfo(dirName, name);
+    self.setSubProjectInfo(dirName, name);
   });
 }
 

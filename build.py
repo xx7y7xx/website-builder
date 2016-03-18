@@ -20,29 +20,24 @@ def filesystem_loader():
   return loaders.FileSystemLoader(here + '/templates')
 
 def _get_root_path():
-  here = os.path.dirname(os.path.abspath(__file__))
-  return os.path.abspath(os.path.join(here, os.pardir))
+  #here = os.path.dirname(os.path.abspath(__file__))
+  #return os.path.abspath(os.path.join(here, os.pardir))
+  # TODO(d3vin.chen@gmail.com): Need read to project.json
+  return os.path.abspath("/home/chenyang/Mount/0.102sftp/var/www/3dly/mobanzhanshi")
 
 def _get_template_path():
   here = os.path.dirname(os.path.abspath(__file__))
   return os.path.abspath(os.path.join(here, "res", "templates"))
 
 def _get_anli_path():
-  here = os.path.dirname(os.path.abspath(__file__))
-  return os.path.abspath(here)
+  #here = os.path.dirname(os.path.abspath(__file__))
+  #return os.path.abspath(here)
+  # TODO(d3vin.chen@gmail.com): Need read to project.json
+  return os.path.abspath("/home/chenyang/Mount/0.102sftp/var/www/3dly/mobanzhanshi/anlizhanshi")
 
 #
 # Model layer
 #
-
-def _get_anli_name2(dir_name):
-  shuju_txt = os.path.join(ROOT_DIR, dir_name, "shuju.txt")
-  if not os.path.isfile(shuju_txt):
-    return dir_name
-  import ConfigParser, codecs
-  config = ConfigParser.ConfigParser()
-  config.readfp(codecs.open(shuju_txt, 'r','utf-8-sig'))
-  return config.get('xinxi', 'mingcheng')
 
 def _get_anli_name(dir_name):
   db_json = os.path.join(ROOT_DIR, dir_name, "db.json")
@@ -51,7 +46,7 @@ def _get_anli_name(dir_name):
   
   import json
   with open(db_json) as data_file:
-    try
+    try:
       obj = json.load(data_file)
     except:
       # Failed to parse txt to json object
@@ -61,7 +56,7 @@ def _get_anli_name(dir_name):
   if "name" not in obj:
     return dir_name
 
-  return data["name"]
+  return obj["name"]
 
 # Parse dir to create a json database.
 # [{
