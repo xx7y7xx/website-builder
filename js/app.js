@@ -1,5 +1,5 @@
 /*jslint node: true, browser: true*/
-/*global $, jQuery, alert*/
+/*global $, jQuery, alert, List*/
 
 "use strict";
 
@@ -33,10 +33,10 @@ Event.prototype = {
 };
 
 /**
- * SubprojectListModel
- * @class SubprojectListModel
+ * SubProjectListModel
+ * @class SubProjectListModel
  */
-function SubprojectListModel(project_dir, db_filename) {
+function SubProjectListModel(project_dir, db_filename) {
   /**
    * Project path
    * @property project_dir
@@ -47,6 +47,15 @@ function SubprojectListModel(project_dir, db_filename) {
   
   /**
    * All sub project info in one big array.
+   * ```json
+   * [{
+   *   "dir_name": "foo",
+   *   "sub_project_name": "bar"
+   * }, {
+   *   "dir_name": "foo",
+   *   "sub_project_name": "bar"
+   * }]
+   * ```
    * @property items
    * @private
    */
@@ -54,9 +63,26 @@ function SubprojectListModel(project_dir, db_filename) {
   
   // Load all into this.items
   this.load_sub_projects();
+  
+  // Prepare for search data.
+  var options = {
+    valueNames: [
+      'dir_name',
+      {attr: 'value', name: 'sub_project_name'}
+    ],
+    item: '<li>' +
+          '<h4 class="dir_name"></h4>' +
+          '<div class="subproject">' +
+          '<label>项目名称:</label> ' +
+          '<input class="sub_project_name" placeholder="请输入项目名称" /> ' +
+          '<button class="save-button">保存</button>' +
+          '</div>' +
+          '</li>'
+  },
+    userList = new List('sub-project-list', options, this.items);
 }
 
-SubprojectListModel.prototype = {
+SubProjectListModel.prototype = {
   /**
    * getItems
    * @method getItems
@@ -170,9 +196,9 @@ SubprojectListModel.prototype = {
 
 /**
  * Sub projects list
- * @class SubprojectListView
+ * @class SubProjectListView
  */
-function SubprojectListView(model, elements) {
+function SubProjectListView(model, elements) {
   this.model = model;
   this.elements = elements;
   
@@ -187,13 +213,13 @@ function SubprojectListView(model, elements) {
   
   this.elements["sub-project-list"].on("click", ".save-button", function () {
     that.saveButtonClicked.notify({
-      "sub-project": $(this).parent()
+      "sub-project": $(this).parent().parent()
     });
     alert("保存成功！");
   });
 }
 
-SubprojectListView.prototype = {
+SubProjectListView.prototype = {
   /**
    * Show view
    * @method show
@@ -217,12 +243,14 @@ SubprojectListView.prototype = {
     items = this.model.getItems();
     $.each(items, function (key, value) {
       $(".sub-project-list").append(
-        '<h4>' + value.dir_name + '</h4>' +
-          '<div class="subproject" data-dir-name="' + value.dir_name + '">' +
-          '<label>项目名称:</label> ' +
-          '<input placeholder="请输入项目名称" value="' + value.sub_project_name + '" /> ' +
-          '<button class="save-button">保存</button>' +
-          '</div>'
+        '<li>' +
+          '<h4 class="dir_name">' + value.dir_name + '</h4>' +
+          '<div class="subproject">' +
+          '  <label>项目名称:</label> ' +
+          '  <input class="sub_project_name" placeholder="请输入项目名称" value="' + value.sub_project_name + '" /> ' +
+          '  <button class="save-button">保存</button>' +
+          '</div>' +
+          '</li>'
       );
     });
   }
@@ -244,7 +272,7 @@ function SubProjectListController(model, view) {
       dirName;
     
     name = subProjectElement.find("input").val();
-    dirName = subProjectElement.data("dir-name");
+    dirName = subProjectElement.find("dir_name").html();
     
     console.log("Get user input project name: " + name);
     console.log("Get dir name stored in html5 data property: " + dirName);
@@ -282,8 +310,8 @@ $(function () {
   
   //load_project();
   
-  model = new SubprojectListModel(project_dir, DB_FILENAME);
-  view = new SubprojectListView(model, {
+  model = new SubProjectListModel(project_dir, DB_FILENAME);
+  view = new SubProjectListView(model, {
     "list": $(".sub-project-list"),
     "reload-button": $("#reload-project"),
     "sub-project-list": $(".sub-project-list")
