@@ -8,6 +8,9 @@ var path = require("path");
 
 var DB_FILENAME = "db.json";
 
+// HTML5 storage key name
+var PROJ_ROOT_PATH = "project_dir";
+
 /**
  * event
  * @class Event
@@ -36,14 +39,14 @@ Event.prototype = {
  * SubProjectListModel
  * @class SubProjectListModel
  */
-function SubProjectListModel(project_dir, db_filename) {
+function SubProjectListModel() {
+
   /**
    * Project path
    * @property project_dir
    * @private
    */
-  this.project_dir = project_dir;
-  this.db_filename = db_filename;
+  this.project_dir = "";
   
   /**
    * All sub project info in one big array.
@@ -61,7 +64,9 @@ function SubProjectListModel(project_dir, db_filename) {
    */
   this.items = [];
   
-  // Load all into this.items
+  this.load_saved_data();
+  
+  // Build model data.
   this.load_sub_projects();
   
   // Prepare for search data.
@@ -84,6 +89,16 @@ function SubProjectListModel(project_dir, db_filename) {
 
 SubProjectListModel.prototype = {
   /**
+   * Load data from HTML5 storage.
+   * @method load_saved_data
+   * @private
+   */
+  "load_saved_data": function () {
+    // Load root path last time saved.
+    this.project_dir = window.localStorage.getItem(PROJ_ROOT_PATH) || "";
+  },
+  
+  /**
    * getItems
    * @method getItems
    * @return {Array} this.items contains all sub project info
@@ -93,27 +108,46 @@ SubProjectListModel.prototype = {
   },
   
   /**
+   * Set project root path
+   * @method setProjectDir
+   * @param {String} path
+   */
+  "setProjectDir": function (path) {
+    this.project_dir = path;
+    
+    window.localStorage.setItem(PROJ_ROOT_PATH, path);
+  },
+  
+  /**
+   * Get project root path
+   * @method getProjectDir
+   * @return {String} root path of project.
+   */
+  "getProjectDir": function () {
+    return this.project_dir;
+  },
+    
+  /**
    * Read project dir and store all sub dir in items.
    * @method load
-   * @private
    */
   "load_sub_projects": function () {
     var stats, self = this;
     try {
       stats = fs.statSync(this.project_dir);
     } catch (e) {
-      alert("Dir not exist");
-      console.log(e);
+      console.error("[Model] Dir not exist");
+      console.error(e);
       return;
     }
     
     if (!stats.isDirectory()) {
-      alert("not a dir");
+      console.error("[Model] not a dir");
       return;
     }
     
     // List files/dirs in current dir.
-    
+    self.items = [];
     $.each.call(this, fs.readdirSync(this.project_dir), function (key, path) {
       var abs_path = self.project_dir + "/" + path;
       if (!fs.lstatSync(abs_path).isDirectory()) {
@@ -139,7 +173,7 @@ SubProjectListModel.prototype = {
    */
   "load_db": function (path) {
     if (!fs.existsSync(path)) {
-      console.log("db not exist: " + path);
+      console.log("[Model] db not exist: " + path);
       return null;
     } else {
       try {
@@ -162,7 +196,7 @@ SubProjectListModel.prototype = {
    * }
    */
   "getSubProjectInfo": function (dirName) {
-    var dbFile = path.join(this.project_dir, dirName, this.db_filename),
+    var dbFile = path.join(this.project_dir, dirName, DB_FILENAME),
       fileObj,
       proj_info = {
         "name": ""
@@ -180,7 +214,7 @@ SubProjectListModel.prototype = {
    * @method setSubProjectName
    */
   "setSubProjectInfo": function (dirName, name) {
-    var dbFile = path.join(this.project_dir, dirName, this.db_filename),
+    var dbFile = path.join(this.project_dir, dirName, DB_FILENAME),
       txt = "";
     
     console.log("Save project info.");
@@ -205,14 +239,16 @@ function SubProjectListView(model, elements) {
   this.reloadButtonClicked = new Event(this);
   this.saveButtonClicked = new Event(this);
   
-  var that = this;
+  var self = this;
   
   this.elements["reload-button"].click(function () {
-    that.rebuildList();
+    self.reloadButtonClicked.notify({
+      "project_root_path": $("#project-path").val()
+    });
   });
   
   this.elements["sub-project-list"].on("click", ".save-button", function () {
-    that.saveButtonClicked.notify({
+    self.saveButtonClicked.notify({
       "sub-project": $(this).parent().parent()
     });
     alert("保存成功！");
@@ -221,11 +257,16 @@ function SubProjectListView(model, elements) {
 
 SubProjectListView.prototype = {
   /**
-   * Show view
+   * Show view, only the first time.
    * @method show
    */
   "show": function () {
+    var projectDir = this.model.getProjectDir();
+    if (projectDir === "") {
+      return;
+    }
     this.rebuildList();
+    $("#project-path").val(this.model.getProjectDir());
   },
   
   /**
@@ -233,7 +274,7 @@ SubProjectListView.prototype = {
    * @method rebuildList
    */
   "rebuildList": function () {
-    console.log("Reload data from model.");
+    console.log("[View] Reload data from model.");
     var list, items;
     
     // Clear list.
@@ -266,7 +307,7 @@ function SubProjectListController(model, view) {
   
   var self = this;
   this.view.saveButtonClicked.attach(function (sender, args) {
-    console.log("event sender: " + sender);
+    console.log("[Controller] event sender: " + sender);
     var subProjectElement = args["sub-project"],
       name,
       dirName;
@@ -274,10 +315,23 @@ function SubProjectListController(model, view) {
     name = subProjectElement.find("input").val();
     dirName = subProjectElement.find(".dir_name").html();
     
-    console.log("Get user input project name: " + name);
-    console.log("Get dir name stored in html5 data property: " + dirName);
+    console.log("[Controller] Get user input project name: " + name);
+    console.log("[Controller] Get dir name stored in html5 data property: " + dirName);
     
     self.setSubProjectInfo(dirName, name);
+  });
+  
+  this.view.reloadButtonClicked.attach(function (sender, args) {
+    console.log("[Controller] event sender: " + sender);
+    
+    if (args.project_root_path === "") {
+      return;
+    }
+    
+    self.model.setProjectDir(args.project_root_path);
+    self.model.load_sub_projects();
+    
+    self.view.rebuildList();
   });
 }
 
@@ -289,28 +343,11 @@ SubProjectListController.prototype = {
 
 $(function () {
   
-  var project_dir,
-    model,
+  var model,
     view,
     controller;
-  
-  $("#reload-project").click(function () {
-    //load_project();
-  });
-  
-  // Load last project path
-  (function () {
-    var project_dir = window.localStorage.getItem("project_dir") || "";
-    $("#project-path").val(project_dir);
-  }());
-  project_dir = $("#project-path").val();
-  
-//  // Save for next time using.
-//  window.localStorage.setItem("project_dir", project_dir);
-  
-  //load_project();
-  
-  model = new SubProjectListModel(project_dir, DB_FILENAME);
+    
+  model = new SubProjectListModel();
   view = new SubProjectListView(model, {
     "list": $(".sub-project-list"),
     "reload-button": $("#reload-project"),
