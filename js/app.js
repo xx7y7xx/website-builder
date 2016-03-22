@@ -272,7 +272,7 @@ function SubProjectListController(model, view) {
       dirName;
     
     name = subProjectElement.find("input").val();
-    dirName = subProjectElement.find("dir_name").html();
+    dirName = subProjectElement.find(".dir_name").html();
     
     console.log("Get user input project name: " + name);
     console.log("Get dir name stored in html5 data property: " + dirName);
