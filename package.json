@@ -1,4 +1,7 @@
 {
   "name": "website-builder",
-  "main": "index.html"
+  "main": "index.html",
+  "window": {
+    "icon": "icon_connect.png"
+  }
 }
