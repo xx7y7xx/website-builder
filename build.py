@@ -9,6 +9,9 @@ from jinja2 import Environment, loaders
 from jinja2._compat import PYPY, PY2
 from jinja2.loaders import split_template_path
 
+# input1: _get_root_path()
+# input2: _get_output_path()
+
 #
 # Filesystem layer
 #
@@ -23,24 +26,29 @@ def _get_root_path():
   #here = os.path.dirname(os.path.abspath(__file__))
   #return os.path.abspath(os.path.join(here, os.pardir))
   # TODO(d3vin.chen@gmail.com): Need read to project.json
-  return os.path.abspath("/home/chenyang/Mount/0.102sftp/var/www/3dly/mobanzhanshi")
+  local = "/home/chenyang/Mount/0.102sftp/var/www/3dly/mobanzhanshi"
+  return os.path.abspath(os.getenv('website_builder_input_path', local))
 
 def _get_template_path():
   here = os.path.dirname(os.path.abspath(__file__))
   return os.path.abspath(os.path.join(here, "res", "templates"))
 
-def _get_anli_path():
+def _get_output_path():
   #here = os.path.dirname(os.path.abspath(__file__))
   #return os.path.abspath(here)
   # TODO(d3vin.chen@gmail.com): Need read to project.json
-  return os.path.abspath("/home/chenyang/Mount/0.102sftp/var/www/3dly/mobanzhanshi/anlizhanshi")
+  local = "/home/chenyang/Mount/0.102sftp/var/www/3dly/mobanzhanshi/anlizhanshi"
+  return os.path.abspath(os.getenv('website_builder_output_path', local))
+
+def _get_anli_dir_path(dir_name):
+  return os.path.join(_get_root_path(), dir_name)
 
 #
 # Model layer
 #
 
 def _get_anli_name(dir_name):
-  db_json = os.path.join(ROOT_DIR, dir_name, "db.json")
+  db_json = os.path.join(_get_anli_dir_path(dir_name), "db.json")
   if not os.path.isfile(db_json):
     return dir_name
   
@@ -71,7 +79,7 @@ def _get_anli_name(dir_name):
 # }]
 def _parse_dir():
   table = []
-  for name in os.listdir(ROOT_DIR):
+  for name in os.listdir(_get_root_path()):
     # Exclude not anli.
     if not _is_anli_dir(name):
       print ("[Warning] Not anli: " + name)
@@ -107,11 +115,11 @@ def _parse_dir():
   return table
 
 def _create_db(dic):
-  with open(os.path.join(_get_anli_path(), 'db.json'), 'w') as f:
+  with open(os.path.join(_get_output_path(), 'db.json'), 'w') as f:
     json.dump(dic, f)
 
 def _read_db():
-  with open(os.path.join(_get_anli_path(), 'db.json')) as f:
+  with open(os.path.join(_get_output_path(), 'db.json')) as f:
     return json.load(f)
 
 # [
@@ -169,7 +177,7 @@ def _fengge_name_table(k):
 
 def _is_anli_dir(name):
   # Only accept dir.
-  if not os.path.isdir(os.path.join(ROOT_DIR, name)):
+  if not os.path.isdir(_get_anli_dir_path(name)):
     return False
   # Name validation
   if name.find('_') is -1:
@@ -199,7 +207,7 @@ def _get_fengge_key(anli_dir_name):
   return anli_dir_name.split('_')[1]
 
 def _get_created_date(dir_name):
-  (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(os.path.join(ROOT_DIR, dir_name))
+  (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(_get_anli_dir_path(dir_name))
   return ctime
 
 #
@@ -216,7 +224,7 @@ def main():
   anli_table = _read_db()
   
   # Hold data needed to be rendered in one list.
-  html_template_data = []
+  html_result = []
   
   # Create index.html template render data.
   # {
@@ -268,7 +276,7 @@ def main():
       # Sort with order number
       datu_list = sorted(datu_list, key=lambda anli: anli[1])
   
-  html_template_data.append({
+  html_result.append({
     "file_name": "index.html",
     "template_name": "anlizhanshi/index.html",
     "render_data": {
@@ -319,7 +327,7 @@ def main():
   
       if current_anli_index % LIMIT == 0 or current_anli_index == anli_count:
         file_name = "more-" + fengge_key + "-" + str(page_number) + ".html"
-        html_template_data.append({
+        html_result.append({
           "file_name": file_name,
           "template_name": "anlizhanshi/more.html",
           "render_data": {
@@ -342,20 +350,16 @@ def main():
   
   
   #env = Environment(loader=filesystem_loader)
-  env = Environment(loader=loaders.FileSystemLoader(TEMPLATE_DIR))
+  env = Environment(loader=loaders.FileSystemLoader(_get_template_path()))
   
-  for tpl_data in html_template_data:
-    tmpl = env.get_template(tpl_data["template_name"])
-    html_path = os.path.join(ANLI_DIR, tpl_data["file_name"])
-    output = tmpl.render(data = tpl_data["render_data"]).encode('utf8')
+  for html_file in html_result:
+    tmpl = env.get_template(html_file["template_name"])
+    html_path = os.path.join(_get_output_path(), html_file["file_name"])
+    output = tmpl.render(data = html_file["render_data"]).encode('utf8')
     with open(html_path, "wb") as fh:
       fh.write(output)
 
 if __name__ == "__main__":
-
-  ROOT_DIR = _get_root_path()
-  TEMPLATE_DIR = _get_template_path()
-  ANLI_DIR = _get_anli_path()
   
   # Pager limit
   LIMIT = 20
